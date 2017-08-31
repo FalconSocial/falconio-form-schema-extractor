@@ -1,0 +1,123 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Falcon.io form schema extractor quiz tests</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <script src="../../webcomponentsjs/webcomponents.js"></script>
+    <script src="../../web-component-tester/browser.js"></script>
+    <script src="../../test-fixture/test-fixture-mocha.js"></script>
+    <link rel="import" href="../falconio-form-schema-extractor.html">
+    <link rel="import" href="./fixtures/custom-scheme-element.html">
+</head>
+
+<body>
+
+    <test-fixture id="basic">
+        <template>
+            <falconio-form-schema-extractor></falconio-form-schema-extractor>
+        </template>
+    </test-fixture>
+
+    <test-fixture id="advanced-form">
+        <template>
+            <form>
+                <input type="text" name="field1" placeholder="label1" required>
+                <input type="number" placeholder="label2" name="field2">
+                <input type="email" name="field3" required>
+                <input type="url" name="field4">
+                <input type="checkbox" name="field5" placeholder="label3">
+                <custom-scheme-element type="scheme" name="field6">
+                    <option data-id="1234" selected>funk</option>
+                    <option data-id="5678">more funk</option>
+                </custom-scheme-element>
+            </form>
+        </template>
+    </test-fixture>
+
+    <script>
+
+        describe('quiz', function() {
+
+            var el;
+
+            context('handle quiz', function () {
+
+                beforeEach(function() {
+                    el = fixture('basic');
+                });
+
+                it('should return schema from advanced form', function () {
+                    var form = fixture('advanced-form');
+                    el.customTypes = {
+                        scheme: function (el) {
+                            return el.scheme;
+                        }
+                    };
+
+                    el.form = form;
+
+                    var subject = el.schema;
+
+                    var expectedResult = {
+                        type: 'object',
+                        properties: {
+                            field1: {
+                                title: 'label1',
+                                type: 'string'
+                            },
+                            field2: {
+                                title: 'label2',
+                                type: 'number'
+                            },
+                            field3: {
+                                type: 'string',
+                                format: 'email'
+                            },
+                            field4: {
+                                type: 'string',
+                                format: 'uri'
+                            },
+                            field5: {
+                                title: 'label3',
+                                type: 'boolean'
+                            },
+
+                            field6: {
+                                type: 'string',
+                                enum: [
+                                    [ '1234' ]
+                                ]
+                            }
+                        },
+                        required: ['field1', 'field3'],
+                        definitions: {
+                            '1234': {
+                                type: 'string',
+                                title: 'funk'
+                            },
+                            '5678': {
+                                type: 'string',
+                                title: 'more funk'
+                            }
+                        },
+                    };
+
+                    // var ajv = new Ajv();
+                    // var valid = ajv.validate(subject, expectedResult);
+
+                    // if (!valid) {
+                    //     console.log(ajv.errors[0]);
+                    // }
+
+                    expect(subject).to.deep.equal(expectedResult);
+                });
+
+            });
+
+        });
+    </script>
+</body>
+
+</html>

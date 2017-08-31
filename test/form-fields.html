@@ -1,0 +1,133 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Falcon.io form schema extractor form tests</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="../../web-component-tester/browser.js"></script>
+    <link rel="import" href="../falconio-form-schema-extractor.html">
+</head>
+
+<body>
+
+    <test-fixture id="schemaExtractor">
+        <template>
+            <falconio-form-schema-extractor></falconio-form-schema-extractor>
+        </template>
+    </test-fixture>
+
+    <test-fixture id="minlength-field">
+        <template>
+            <form>
+                <input type="text" name="field1" placeholder="label1" minlength="10">
+            </form>
+        </template>
+    </test-fixture>
+
+    <test-fixture id="maxlength-field">
+        <template>
+            <form>
+                <input type="text" name="field1" placeholder="label1" maxlength="10">
+            </form>
+        </template>
+    </test-fixture>
+
+    <test-fixture id="min-field">
+        <template>
+            <form>
+                <input type="number" name="field1" placeholder="label1" min="1">
+            </form>
+        </template>
+    </test-fixture>
+
+    <test-fixture id="max-field">
+        <template>
+            <form>
+                <input type="number" name="field1" placeholder="label1" max="10">
+            </form>
+        </template>
+    </test-fixture>
+
+    <script>
+
+        describe('fields', function() {
+
+            var schemaExtractor;
+
+            context('singles', function () {
+
+                beforeEach(function() {
+                    schemaExtractor = fixture('schemaExtractor');
+                });
+
+                it('should convert minlength correctly', function () {
+                    schemaExtractor.form = fixture('minlength-field');
+                    var espectedResult = {
+                        type: 'object',
+                        properties: {
+                            field1: {
+                                title: 'label1',
+                                type: 'string',
+                                minLength: 10
+                            }
+                        }
+                    };
+                    expect(schemaExtractor.schema).to.deep.equal(espectedResult);
+                });
+
+                it('should convert maxlength correctly', function () {
+                    schemaExtractor.form = fixture('maxlength-field');
+                    var espectedResult = {
+                        type: 'object',
+                        properties: {
+                            field1: {
+                                title: 'label1',
+                                type: 'string',
+                                maxLength: 10
+                            }
+                        }
+                    };
+                    expect(schemaExtractor.schema).to.deep.equal(espectedResult);
+                });
+
+                it('should convert min correctly', function () {
+                    schemaExtractor.form = fixture('min-field');
+                    var espectedResult = {
+                        type: 'object',
+                        properties: {
+                            field1: {
+                                title: 'label1',
+                                type: 'number',
+                                minimum: 1
+                            }
+                        }
+                    };
+
+                    expect(schemaExtractor.schema).to.deep.equal(espectedResult);
+                });
+
+                 it('should convert max correctly', function () {
+                    schemaExtractor.form = fixture('max-field');
+                    var espectedResult = {
+                        type: 'object',
+                        properties: {
+                            field1: {
+                                title: 'label1',
+                                type: 'number',
+                                maximum: 10
+                            }
+                        }
+                    };
+
+                    expect(schemaExtractor.schema).to.deep.equal(espectedResult);
+                });
+
+            });
+
+        });
+    </script>
+</body>
+
+</html>

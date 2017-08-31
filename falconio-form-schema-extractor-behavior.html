@@ -1,0 +1,352 @@
+<link rel="import" href="../polymer/polymer.html">
+
+<script>
+
+    /**
+     * Use `FALCONIO.SchemaExtractorBehavior` to be cool.
+     *
+     * @polymerBehavior FALCONIO.SchemaExtractorBehavior
+     */
+    FALCONIO.SchemaExtractorBehavior = {
+
+        properties: {
+
+            /**
+             * Form to extract scheme from
+             * @type {Object}
+             */
+            form: {
+                type: Object,
+                observer: '_formChanged'
+            },
+
+            /**
+             * Query selector for form elements which can be used
+             * to filter the element to parse. Default query exclude
+             * buttons.
+             * @type {String}
+             */
+            elementQuery: {
+                type: String,
+                value: '[name]:not(button):not([type="button"])'
+            },
+
+            /**
+             * Pool of elements to extract scheme from
+             * @type {Array}
+             */
+            elements: {
+                type: Array,
+                readOnly: true,
+                notify: true
+            },
+
+            /**
+             * Map of supported field types
+             * @type {object}
+             */
+            types: {
+                type: Object,
+                value: function () {
+                    return {
+                        text: { type: 'string' },
+                        number: { type: 'number' },
+                        checkbox: { type: 'boolean' },
+                        email: { type: 'string', format: 'email' },
+                        url: { type: 'string', format: 'uri' },
+                        'select-one': function (item) {
+                            var childElements = [].slice.call(item.options);
+
+                            var options = childElements
+                                .filter(function (child) {
+                                    return child.value;
+                                })
+                                .map(function (child) {
+                                    return child.value;
+                                });
+
+                            return {
+                                type: 'string',
+                                enum: options
+                            };
+                        },
+                        'select-multiple': function (item) {
+                            var childElements = [].slice.call(item.options);
+
+                            var options = childElements
+                                .filter(function (child) {
+                                    return child.value;
+                                })
+                                .map(function (child) {
+                                    return child.value;
+                                });
+
+                            return {
+                                type: 'array',
+                                items: [
+                                    { type: 'string', enum: options }
+                                ]
+                            };
+                        }
+                    };
+                }
+            },
+
+            /**
+             * Custom types
+             *
+             * @type {object}
+             */
+            customTypes: {
+                type: Object,
+                value: function () {
+                    return {};
+                }
+            },
+
+            /**
+             * Schema generated from elements
+             * @type {Object}
+             */
+            schema: {
+                type: Object,
+                notify: true,
+                readOnly: true,
+                computed: '_computeSchema(elements.*, propertyTransformationMap, types, customTypes)'
+            },
+
+            schemaAsString: {
+                type: String,
+                notify: true,
+                readOnly: true,
+                computed: '_stringify(schema)'
+            },
+
+            /**
+             * Transformation map for field properties
+             * @type {Object}
+             */
+            propertyTransformationMap: {
+                type: Object,
+                value: function () {
+                    return {
+                        title: function (item) {
+                            return item.placeholder || item.label;
+                        },
+                        description: 'title',
+                        id: 'id',
+                        minLength: 'minLength',
+                        maxLength: 'maxLength',
+                        minimum: { property: 'min', castAs: 'number' },
+                        maximum: { property: 'max', castAs: 'number' }
+                    };
+                }
+            }
+        },
+
+        _formChanged: function (form) {
+
+            this._removeObservers();
+
+            var formElements = Polymer.dom(form).querySelectorAll(this.elementQuery);
+
+            var validAttributes = Object.keys(this.propertyTransformationMap);
+
+            this._observers = formElements.map(function (element) {
+                var observer = new MutationObserver(function (mutationRecords) {
+
+                    mutationRecords.forEach(function (record) {
+                        if (
+                            record.type === 'attributes' &&
+                            validAttributes.indexOf(record.attributeName) > -1
+                        ) {
+
+                            this.debounce('elements', function () {
+                                var elements = Polymer.dom(form).querySelectorAll(this.elementQuery);
+                                this._setElements(elements);
+                            }, 100)
+                        }
+                    }, this);
+                }.bind(this));
+
+                var config = {
+                    subtree: true,
+                    attributes: true
+                };
+
+                observer.observe(element, config);
+
+                return observer;
+            }, this);
+
+            if (formElements.length > 0) {
+                this._setElements(formElements);
+            }
+        },
+
+        _computeSchema: function (formElementsInfo, propertyTransformationMap, types, customTypes) {
+            var allTypes = Object.assign({}, types, customTypes);
+            var schema = {
+                type: 'object',
+                properties: this._computeElementProperties(formElementsInfo.base, propertyTransformationMap, allTypes)
+            };
+
+            var required = this._getRequiredFields(formElementsInfo.base);
+
+            if (required.length > 0) {
+                schema.required = required;
+            }
+
+            var definitions = this._getDefinitions(formElementsInfo.base);
+
+            if (JSON.stringify(definitions) !== JSON.stringify({})) {
+                schema.definitions = definitions;
+            }
+
+            return schema;
+        },
+
+        _stringify: function (object) {
+            return JSON.stringify(object, null, '    ');
+        },
+
+        /**
+         * Computes the required fields
+         *
+         * @param  {Array.<HTMLelement>} elements
+         * @return {Array.<String>} Array of required element names
+         */
+        _getRequiredFields: function (elements) {
+            return elements
+                .filter(function (element) {
+                    return element.required;
+                })
+                .map(function (element) {
+                    return element.name;
+                });
+        },
+
+        /**
+         * Gather definitions from elements
+         *
+         * @param  {Array.<HTMLelement>} elements
+         * @return {Object} definitions
+         */
+        _getDefinitions: function (elements) {
+            return elements
+                .filter(function (element) {
+                    return element.definitions;
+                })
+                .reduce(function (acc, element) {
+                    Object.assign(acc, element.definitions);
+                    return acc;
+                }, {});
+        },
+
+        _computeElementProperties: function (elements, propertyTransformationMap, types) {
+
+            return elements
+                .reduce(function (memo, element) {
+
+                    if (!element.name) {
+                        // eslint-disable-next-line no-console
+                        console.warn('Input needs a name attribute and will not be included in the scheme', element);
+                        return memo;
+                    }
+
+                    var path = element.name;
+
+                    this.set(path, Object.assign(
+                        this._transformPropertyMap(element, propertyTransformationMap),
+                        this._getTypeProperties(element.type, types, element)
+                    ), memo);
+
+                    return memo;
+                }.bind(this), {});
+        },
+
+        /**
+         * Transform keys and extract data from an item.
+         * If no value or item property is found, it is
+         * not added to the transformation.
+         * @param  {Object} item
+         * @param  {Object} map
+         * @return {Object}         transformed object
+         */
+        _transformPropertyMap: function (item, map) {
+            return Object.keys(map).reduce(function(memo, property) {
+
+                var itemPropertyValueParser = this._getValueParser(property, map);
+                var itemPropertyValue = itemPropertyValueParser(item);
+
+                if (itemPropertyValue && itemPropertyValue !== -1) {
+                    memo[property] = itemPropertyValue;
+                }
+
+                return memo;
+            }.bind(this), {});
+        },
+
+        _getValueParser: function (property, map) {
+
+            var parsers = {
+
+                string: function (key) {
+                    return function (item) {
+                        return item[key];
+                    };
+                },
+
+                function: function (fn) {
+                    return fn;
+                },
+
+                object: function (object) {
+                    return function (item) {
+                        var value = item[object.property];
+
+                        if (value && object.castAs === 'number') {
+                            value = Number(value);
+                        }
+
+                        return value;
+                    };
+                }
+            };
+
+            var mappedProperty = map[property];
+            var type = typeof mappedProperty;
+
+            return (parsers[type] || 'string')(mappedProperty);
+        },
+
+        /**
+         * Properties for input types
+         * @param  {String} type
+         * @return {Object}
+         */
+        _getTypeProperties: function (type, types, element) {
+            var map = types[type] || types.text;
+
+            // support custom format from elements
+            if (element && element.dataset && element.dataset.format) {
+                map = Object.assign({}, map, { format: element.dataset.format });
+            }
+
+            return typeof map === 'function' ? map(element) : map;
+        },
+
+        _removeObservers: function () {
+            if (this._observers) {
+                this._observers.forEach(function (observer) {
+                    observer.disconnect();
+                });
+            }
+        },
+
+        detached: function () {
+            this._removeObservers();
+        }
+    };
+
+</script>

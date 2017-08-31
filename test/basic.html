@@ -1,0 +1,61 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Falcon.io form schema extractor basic tests</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="../../web-component-tester/browser.js"></script>
+    <link rel="import" href="../falconio-form-schema-extractor.html">
+</head>
+
+<body>
+
+    <test-fixture id="basic">
+        <template>
+            <falconio-form-schema-extractor></falconio-form-schema-extractor>
+        </template>
+    </test-fixture>
+
+    <script>
+
+        describe('basic', function() {
+
+            var el;
+
+            context('Defaults', function () {
+
+                before(function() {
+                    el = fixture('basic');
+                });
+
+                it('should declare the right properties', function() {
+                    expect(el).to.have.property('form');
+                    expect(el).to.have.property('elementQuery');
+                    expect(el).to.have.property('elements');
+                    expect(el).to.have.property('schema');
+                    expect(el).to.have.property('types');
+                    expect(el).to.have.property('customTypes');
+                });
+
+                xit('should have the correct default type map', function () {
+                    var expectedMap = {
+                        text: { type: 'string' },
+                        number: { type: 'number' },
+                        checkbox: { type: 'boolean' },
+                        email: { type: 'string', format: 'email' },
+                        url: { type: 'string', format: 'uri' },
+                        'select-one': { type: 'string' },
+                        'select-multiple': { type: 'array' }
+                    };
+
+                    expect(el.types).to.deep.equal(expectedMap);
+                });
+            });
+
+        });
+    </script>
+</body>
+
+</html>

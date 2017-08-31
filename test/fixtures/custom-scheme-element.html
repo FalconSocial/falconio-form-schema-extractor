@@ -1,0 +1,58 @@
+<link rel="import" href="../../polymer/polymer.html">
+
+<script>
+
+   Polymer({
+        is: 'custom-scheme-element',
+
+        properties: {
+            name: String,
+
+            type: String,
+
+            scheme: {
+                type: Object,
+                value: function () {
+                    var options = [].slice.call(this.children);
+
+                    var selected = options
+                        .filter(function (option) {
+                            return option.selected;
+                        })
+                        .map(function (option) {
+                            return option.dataset.id;
+                        });
+
+                    return {
+                        type: 'string',
+                        enum: [ selected ]
+                    };
+                }
+            },
+
+            definitions: {
+                type: Object,
+                value: function () {
+                    var options = [].slice.call(this.children);
+                    return options.reduce(function (acc, answer) {
+                        acc[answer.dataset.id] = {
+                            type: 'string',
+                            title: Polymer.dom(answer).textContent
+                        };
+                        return acc;
+                    }, {});
+                }
+            },
+
+            value: {
+                type: Array,
+                value: function () {
+
+                }
+            },
+
+            path: String
+        }
+    });
+
+</script>

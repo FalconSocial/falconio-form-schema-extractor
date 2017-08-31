@@ -1,0 +1,228 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Falcon.io form schema extractor method tests</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+    <script src="../../web-component-tester/browser.js"></script>
+    <link rel="import" href="../falconio-form-schema-extractor.html">
+    <link rel="import" href="./fixtures/custom-type-element.html">
+</head>
+
+<body>
+
+    <test-fixture id="basic">
+        <template>
+            <falconio-form-schema-extractor></falconio-form-schema-extractor>
+        </template>
+    </test-fixture>
+
+    <test-fixture id="form-element">
+        <template>
+            <input type="text" name="test" placeholder="test">
+        </template>
+    </test-fixture>
+
+    <test-fixture id="custom-element-type">
+        <template>
+            <custom-type-element name="test" type="custom"></custom-type-element>
+        </template>
+    </test-fixture>
+
+    <script>
+
+        describe('methods', function() {
+
+            var el;
+
+            context('_getRequiredFields()', function () {
+
+                beforeEach(function() {
+                    el = fixture('basic');
+                });
+
+                it('should return empty array if no required fields are found', function () {
+                    var elements = [
+                        { name: 'element1' },
+                        { name: 'element2' }
+                    ];
+
+                    var subject = el._getRequiredFields(elements);
+                    var expectedResult = [];
+
+                    expect(subject).to.deep.equal(expectedResult);
+                });
+
+                it('should use the name property for the output map', function () {
+                    var nameValue = 'field1';
+                    var elements = [
+                        { name: nameValue, required: true }
+                    ];
+
+                    var subject = el._getRequiredFields(elements);
+                    var expectedResult = [nameValue];
+
+                    expect(subject).to.deep.equal(expectedResult);
+                });
+
+                it('should return single item if one field is found', function () {
+                    var elements = [
+                        { name: 'element1' },
+                        { name: 'element2', required: true }
+                    ];
+
+                    var subject = el._getRequiredFields(elements);
+                    var expectedResult = ['element2'];
+
+                    expect(subject).to.be.length(1);
+                    expect(subject).to.deep.equal(expectedResult);
+                });
+
+                it('should return multiple items if several fields are found', function () {
+                    var elements = [
+                        { name: 'element1' },
+                        { name: 'element2', required: true },
+                        { name: 'element3', required: true }
+                    ];
+
+                    var subject = el._getRequiredFields(elements);
+                    var expectedResult = ['element2', 'element3'];
+
+                    expect(subject).to.be.length(2);
+                    expect(subject).to.deep.equal(expectedResult);
+                });
+
+            });
+
+            context('_getTypeProperties()', function () {
+
+                beforeEach(function() {
+                    el = fixture('basic');
+                });
+
+                it('should return the found type', function () {
+                    var typeObject = { type: 'number' };
+                    var typeMap = {
+                        number: typeObject
+                    };
+                    var type = 'number';
+                    var subject = el._getTypeProperties(type, typeMap);
+
+                    expect(subject).to.deep.equal(typeObject);
+                });
+
+                it('should return the default type `text` if provided type does not exist', function () {
+                    var typeObject = { type: 'string' };
+                    var typeMap = {
+                        text: typeObject
+                    };
+                    var type = null;
+
+                    var subject = el._getTypeProperties(type, typeMap);
+
+                    expect(subject).to.deep.equal(typeObject);
+                });
+
+            });
+
+            context('_getValueParser()', function () {
+
+                beforeEach(function() {
+                    el = fixture('basic');
+                });
+
+                // TODO
+
+            });
+
+            context('_transformPropertyMap()', function () {
+
+                beforeEach(function() {
+                    el = fixture('basic');
+                });
+
+                it('should return empty object if no value is found', function () {
+                    var item = { name: undefined };
+                    var map = { title: 'name' };
+
+                    var subject = el._transformPropertyMap(item, map);
+                    var expectedResult = {};
+
+                    expect(subject).to.deep.equal(expectedResult);
+                });
+
+                it('should return empty object if no key is found', function () {
+                    var item = { notToBeFound: 'value' };
+                    var map = { title: 'name' };
+
+                    var subject = el._transformPropertyMap(item, map);
+                    var expectedResult = {};
+
+                    expect(subject).to.deep.equal(expectedResult);
+                });
+
+                it('should return the last found value if multiple properties shares the property name', function () {
+                    // eslint-disable-next-line no-dupe-keys
+                    var item = { name: 'firstItem', name: 'lastItem' };
+                    var map = { title: 'name' };
+
+                    var subject = el._transformPropertyMap(item, map);
+                    var expectedResult = {
+                        title: 'lastItem'
+                    };
+
+                    expect(subject).to.deep.equal(expectedResult);
+                });
+
+            });
+
+            context('_computeSchema()', function () {
+                beforeEach(function() {
+                    el = fixture('basic');
+                });
+
+                it('should parse simple setup', function () {
+                    var formElementsMutation = { base: [fixture('form-element')] };
+                    var propertyTransformationMap = el.propertyTransformationMap;
+                    var types = el.types;
+                    var customTypes = {};
+
+                    var subject = el._computeSchema(formElementsMutation, propertyTransformationMap, types, customTypes);
+                    var expectedResult = {
+                        type: 'object',
+                        properties: {
+                            test: {
+                                title: 'test',
+                                type: 'string'
+                            }
+                        }
+                    };
+
+                    expect(subject).to.deep.equal(expectedResult);
+                });
+
+                it('should handle custom types', function () {
+                    var element = fixture('custom-element-type');
+                    var formElementsMutation = { base: [element] };
+                    var propertyTransformationMap = el.propertyTransformationMap;
+                    var types = el.types;
+                    var customTypes = {
+                        custom: sinon.spy()
+                    };
+
+                    el._computeSchema(formElementsMutation, propertyTransformationMap, types, customTypes);
+                    var subject = customTypes.custom;
+
+                    expect(subject).to.have.been.calledOnce
+                        .and.have.been.calledWith(element);
+                });
+
+            });
+
+        });
+    </script>
+</body>
+
+</html>
