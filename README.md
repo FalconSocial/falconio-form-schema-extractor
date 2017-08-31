@@ -10,7 +10,7 @@ Polymer 1 element for extracting data out of forms. Part of Falcon.io - Build El
     form="[[ form ]]"
     schema-as-string="{{ schema }}"
 ></falconio-form-schema-extractor>
-
+```
 
 `<build-form-schema-extractor>` attempts to extract a [json schema](http://json-schema.org/) from a [html form](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/form) using built-in or provided rules to transform the form fields into json schema properties. It will continously update the scheme according to the fields that is currently in the provided form.
 Example:
