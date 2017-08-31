@@ -37,7 +37,7 @@ Which would extract in this json scheme
     {
         "type": "object",
         "properties": {
-            "fullname" {
+            "fullname": {
                 "title": "Full Name",
                 "type": "string"
             },
@@ -78,7 +78,7 @@ field name | function | schema name
 
 ## Running tests from the command line
 
-1. When in the `falconio-form-schema-extractor` directory, run `polymer test`
+When in the `falconio-form-schema-extractor` directory, run `polymer test`
 
 
 
