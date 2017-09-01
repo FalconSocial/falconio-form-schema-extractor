@@ -1,28 +1,29 @@
 {
-    "name": "falconio-form-schema-extractor",
-    "description": "falconio-form-schema-extractor",
-    "main": "falconio-form-schema-extractor.html",
-    "license": "MIT License",
-    "keywords": [
-        "Falcon.io",
-        "form",
-        "form-schema",
-        "form-schema-extractor",
-        "web-components",
-        "web-component",
-        "polymer"
-    ],
-    "version": "1.0.0",
-    "dependencies": {
-      "polymer": "^1.9",
-      "iron-demo-helpers": "iron-demo-helpers#^1.0.0",
-      "iron-form": "iron-form#^1.0.0",
-      "iron-component-page": "iron-component-page#^1.0.0"
-    },
-    "devDependencies": {
-      "web-component-tester": "^6.0.0"
-    },
-    "resolutions": {
-      "polymer": "^1.9"
-    }
+  "name": "falconio-form-schema-extractor",
+  "description": "falconio-form-schema-extractor",
+  "main": "falconio-form-schema-extractor.html",
+  "license": "MIT License",
+  "keywords": [
+    "Falcon.io",
+    "form",
+    "form-schema",
+    "form-schema-extractor",
+    "web-components",
+    "web-component",
+    "polymer"
+  ],
+  "version": "1.0.0",
+  "dependencies": {
+    "polymer": "^1.9",
+    "iron-demo-helpers": "iron-demo-helpers#^1.0.0",
+    "iron-form": "iron-form#^1.0.0",
+    "iron-component-page": "iron-component-page#^1.0.0",
+    "juicy-ace-editor": "Juicy/juicy-ace-editor#1.2.5"
+  },
+  "devDependencies": {
+    "web-component-tester": "^6.0.0"
+  },
+  "resolutions": {
+    "polymer": "^1.9"
+  }
 }

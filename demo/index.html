@@ -10,7 +10,8 @@
     <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
 
     <link rel="import" href="../../iron-form/iron-form.html">
-    <link rel="import" href="../../falconio-form-schema-extractor.html">
+    <link rel="import" href="../../juicy-ace-editor/juicy-ace-editor.html">
+    <link rel="import" href="../falconio-form-schema-extractor.html">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ajv/4.7.5/ajv.min.js"></script>
 
     <style is="custom-style" include="demo-pages-shared-styles">
@@ -18,7 +19,7 @@
             max-width: 800px;
         }
 
-        ace-element {
+        juicy-ace-editor {
             position: relative;
             width: 100%;
             height: 200px;
@@ -38,15 +39,15 @@
 <body unresolved>
 
     <template id="form">
-        <form is="iron-form">
-            <input type="text" name="name" minlength="4" placeholder="Name">
-            <input type="number" min="12" max="99" name="age" placeholder="Age">
-            <select name="options">
+<form is="iron-form">
+    <input type="text" name="name" minlength="4" placeholder="Name">
+    <input type="number" min="12" max="99" name="age" placeholder="Age">
+    <select name="options">
         <option disabled selected value>please select</option>
         <option value="1">option 1</option>
         <option value="2">option 2</option>
     </select>
-        </form>
+</form>
     </template>
 
     <div class="vertical-section-container centered">
@@ -57,12 +58,12 @@
                 <template is="dom-bind">
 
                     <h1>input</h1>
-                    <ace-element id="htmlEditor" mode="html" value="{{ html }}"></ace-element>
+                    <juicy-ace-editor id="htmlEditor" theme="ace/theme/monokai" mode="ace/mode/html" value="{{ html }}"></juicy-ace-editor>
 
                     <falconio-form-schema-extractor id="extractor" form="[[ form ]]" schema-as-string="{{ schema }}"></falconio-form-schema-extractor>
 
                     <h1>JSON scheme</h1>
-                    <ace-element readonly mode="json" value="{{ schema }}"></ace-element>
+                    <juicy-ace-editor readonly theme="ace/theme/monokai" mode="ace/mode/json" value="{{ schema }}"></juicy-ace-editor>
 
                     <h1>form</h1>
                     <div id="wrapper">
@@ -71,7 +72,7 @@
                     </div>
 
                     <h1>Validation</h1>
-                    <ace-element readonly id="validation" mode="json" value="{{ validation }}"></ace-element>
+                    <juicy-ace-editor readonly id="validation" theme="ace/theme/monokai" mode="ace/mode/json" value="{{ validation }}"></juicy-ace-editor>
 
                     <script>
                         var root = document.querySelector('[is="dom-bind"]');
@@ -81,15 +82,16 @@
                         var schemeExtractor = document.querySelector('#extractor');
                         var validationEditor = document.querySelector('#validation');
 
-                        htmlEditor.addEventListener('editor-input', function (event) {
-                            var html = event.detail.value;
-                            container.innerHTML = html;
+                        htmlEditor.addEventListener('change', function (event) {
+                            //debugger
+                            //var html = event.detail.value;
+                            container.innerHTML = root.html;
                             root.form = container.querySelector('form');
                         });
 
                         validateButton.addEventListener('click', validate);
 
-                        root.form = root.querySelector('#form1');
+                        root.form = root.querySelector('#form');
                         var form = document.getElementById('form');
                         root.html = form.content.firstElementChild.outerHTML;
 
