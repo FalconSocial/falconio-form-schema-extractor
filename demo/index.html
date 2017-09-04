@@ -57,22 +57,25 @@
             <template id="demo1">
                 <template is="dom-bind">
 
-                    <h1>input</h1>
+                    <h1>INPUT: Form</h1>
                     <juicy-ace-editor id="htmlEditor" theme="ace/theme/monokai" mode="ace/mode/html" value="{{ html }}"></juicy-ace-editor>
-
-                    <falconio-form-schema-extractor id="extractor" form="[[ form ]]" schema-as-string="{{ schema }}"></falconio-form-schema-extractor>
-
-                    <h1>JSON scheme</h1>
-                    <juicy-ace-editor readonly theme="ace/theme/monokai" mode="ace/mode/json" value="{{ schema }}"></juicy-ace-editor>
+                    
+                    <falconio-form-schema-extractor id="extractor" form="[[ form ]]" schema-as-string="{{ schema }}"></falconio-form-schema-extractor> 
 
                     <h1>form</h1>
                     <div id="wrapper">
                         <div id="container"></div>
                         <button id="validate">Validate</button>
+                        <pre id="validation-messages">
+                            
+                        </pre>
                     </div>
-
+                    
                     <h1>Validation</h1>
                     <juicy-ace-editor readonly id="validation" theme="ace/theme/monokai" mode="ace/mode/json" value="{{ validation }}"></juicy-ace-editor>
+                    
+                    <h1>OUTPUT: JSON scheme</h1>
+                    <juicy-ace-editor readonly theme="ace/theme/monokai" mode="ace/mode/json" value="{{ schema }}"></juicy-ace-editor>
 
                     <script>
                         var root = document.querySelector('[is="dom-bind"]');
@@ -81,10 +84,9 @@
                         var validateButton = document.querySelector('#validate');
                         var schemeExtractor = document.querySelector('#extractor');
                         var validationEditor = document.querySelector('#validation');
+                        var validationElement = document.querySelector('#validation-messages');
 
                         htmlEditor.addEventListener('change', function (event) {
-                            //debugger
-                            //var html = event.detail.value;
                             container.innerHTML = root.html;
                             root.form = container.querySelector('form');
                         });
@@ -106,7 +108,12 @@
 
                             var valid = ajv.validate(scheme, formData);
                             var validation = ajv.errors || { valid: valid };
+                            var validationMessages = validation.length ? validation.reduce(function(acc, curr) {
+                                acc[curr.dataPath.substr(1)] = curr.message;
+                                return acc;
+                            }, {}) : validation;
 
+                            validationElement.innerHTML = JSON.stringify(validationMessages, null, ' '.repeat(4));
                             validationEditor.value = JSON.stringify(validation, null, ' '.repeat(4));
                         }
                     </script>
